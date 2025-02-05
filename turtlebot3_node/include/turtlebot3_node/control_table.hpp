@@ -105,6 +105,16 @@ typedef struct
 
   ControlItem profile_acceleration_left = {174, RAM, 4, READ_WRITE};
   ControlItem profile_acceleration_right = {178, RAM, 4, READ_WRITE};
+  ControlItem profile_acceleration_pan = {182, RAM, 4, READ_WRITE}; // ADDED
+  ControlItem profile_acceleration_tilt = {186, RAM, 4, READ_WRITE}; // ADDED
+
+  ControlItem present_current_pan = {190, RAM, 4, READ}; // ADDED
+  ControlItem present_current_tilt = {194, RAM, 4, READ}; // ADDED
+  ControlItem present_velocity_pan = {198, RAM, 4, READ}; // ADDED
+  ControlItem present_velocity_tilt = {202, RAM, 4, READ}; // ADDED
+  ControlItem present_position_pan = {206, RAM, 4, READ}; // ADDED
+  ControlItem present_position_tilt = {210, RAM, 4, READ}; // ADDED
+
 } ControlTable;
 
 const ControlTable extern_control_table;

@@ -65,10 +65,15 @@ void TurtleBot3::init_dynamixel_sdk_wrapper(const std::string & usb_port)
 
   dxl_sdk_wrapper_ = std::make_shared<DynamixelSDKWrapper>(opencr);
 
+  // dxl_sdk_wrapper_->init_read_memory(
+  //   extern_control_table.millis.addr,
+  //   (extern_control_table.profile_acceleration_right.addr - extern_control_table.millis.addr) +
+  //   extern_control_table.profile_acceleration_right.length
+  // );
   dxl_sdk_wrapper_->init_read_memory(
     extern_control_table.millis.addr,
-    (extern_control_table.profile_acceleration_right.addr - extern_control_table.millis.addr) +
-    extern_control_table.profile_acceleration_right.length
+    (extern_control_table.present_position_tilt.addr - extern_control_table.millis.addr) +
+    extern_control_table.present_position_tilt.length
   );
 }
 
@@ -77,7 +82,7 @@ void TurtleBot3::check_device_status()
   if (dxl_sdk_wrapper_->is_connected_to_device()) {
     std::string sdk_msg;
     uint8_t reset = 1;
-
+    
     dxl_sdk_wrapper_->set_data_to_device(
       extern_control_table.imu_re_calibration.addr,
       extern_control_table.imu_re_calibration.length,
@@ -125,6 +130,7 @@ void TurtleBot3::add_motors()
     "motors.profile_acceleration",
     motors_.profile_acceleration,
     0.0);
+
 }
 
 void TurtleBot3::add_wheels()
@@ -290,9 +296,10 @@ void TurtleBot3::parameter_event_callback()
 
           motors_.profile_acceleration =
             motors_.profile_acceleration / motors_.profile_acceleration_constant;
-
+          // HERE ADD profile accel p & t and add to ROS2 control table.hpp AND turtlebot3.cpp firmware
           union Data {
-            int32_t dword[2];
+            // int32_t dword[2];
+            int32_t dword[4];
             uint8_t byte[4 * 2];
           } data;
 
@@ -300,10 +307,14 @@ void TurtleBot3::parameter_event_callback()
           data.dword[1] = static_cast<int32_t>(motors_.profile_acceleration);
 
           uint16_t start_addr = extern_control_table.profile_acceleration_left.addr;
+          // uint16_t addr_length =
+          //   (extern_control_table.profile_acceleration_right.addr -
+          //   extern_control_table.profile_acceleration_left.addr) +
+          //   extern_control_table.profile_acceleration_right.length;
           uint16_t addr_length =
-            (extern_control_table.profile_acceleration_right.addr -
+            (extern_control_table.profile_acceleration_tilt.addr -
             extern_control_table.profile_acceleration_left.addr) +
-            extern_control_table.profile_acceleration_right.length;
+            extern_control_table.profile_acceleration_tilt.length;
 
           uint8_t * p_data = &data.byte[0];
 
@@ -335,12 +346,14 @@ void TurtleBot3::cmd_vel_callback()
         int32_t dword[6];
         uint8_t byte[4 * 6];
       } data;
-
+      // HERE ADD THE ACTUAL CMD TO angular x & y address in the table (already in tables)
       data.dword[0] = static_cast<int32_t>(msg->linear.x * 100);
       data.dword[1] = 0;
       data.dword[2] = 0;
-      data.dword[3] = 0;
-      data.dword[4] = 0;
+      // data.dword[3] = 0;
+      // data.dword[4] = 0;
+      data.dword[3] = static_cast<int32_t>(msg->angular.x * 100);
+      data.dword[4] = static_cast<int32_t>(msg->angular.y * 100);
       data.dword[5] = static_cast<int32_t>(msg->angular.z * 100);
 
       uint16_t start_addr = extern_control_table.cmd_velocity_linear_x.addr;
